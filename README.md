@@ -2,7 +2,7 @@
 
 Generate secure passwords and bcrypt hashes from your browser.
 
-**Live app:** [password-generator.streamlit.app](https://ian-louw-password-generator.streamlit.app)
+**Live app:** [free-password-generator.streamlit.app](https://free-password-generator.streamlit.app)
 
 ## Run locally
 
