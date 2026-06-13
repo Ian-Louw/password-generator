@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- Lock the renderer down: no remote content, no inline eval. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:;" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UltraPass</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">🔐</div>
+        <div class="brand-text">
+          <strong>UltraPass</strong>
+          <span>secure &amp; offline</span>
+        </div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="password">🔑 <span>Password</span></button>
+        <button class="nav-item" data-view="passphrase">💬 <span>Passphrase</span></button>
+        <button class="nav-item" data-view="pin">🔢 <span>PIN</span></button>
+        <button class="nav-item" data-view="bulk">📋 <span>Bulk</span></button>
+        <button class="nav-item" data-view="hash">#️⃣ <span>Hash</span></button>
+        <button class="nav-item" data-view="analyze">🛡️ <span>Analyze</span></button>
+        <button class="nav-item" data-view="settings">⚙️ <span>Settings</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <span class="offline-badge">● Offline</span>
+        <a href="https://github.com/ian-louw/password-generator" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="content">
+      <!-- ── Password ─────────────────────────────────────────── -->
+      <section class="view active" id="view-password">
+        <h1>Password Generator</h1>
+        <p class="subtitle">Cryptographically secure, generated entirely on your device.</p>
+
+        <div class="output-card">
+          <output class="output" id="pw-output" title="Click to copy">click generate</output>
+          <div class="output-actions">
+            <button class="icon-btn" id="pw-copy" title="Copy">📋</button>
+            <button class="icon-btn" id="pw-regen" title="Regenerate">🔄</button>
+          </div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-bar"><span id="pw-meter-fill"></span></div>
+          <div class="meter-info">
+            <span id="pw-meter-label">—</span>
+            <span id="pw-meter-entropy" class="muted"></span>
+          </div>
+        </div>
+        <p class="crack-line muted" id="pw-crack"></p>
+
+        <div class="controls">
+          <div class="control-row">
+            <label for="pw-length">Length</label>
+            <input type="range" id="pw-length" min="4" max="128" value="20" />
+            <output id="pw-length-val" class="length-val">20</output>
+          </div>
+          <div class="toggles">
+            <label class="chk"><input type="checkbox" id="pw-upper" checked /> Uppercase <span class="hint">A-Z</span></label>
+            <label class="chk"><input type="checkbox" id="pw-lower" checked /> Lowercase <span class="hint">a-z</span></label>
+            <label class="chk"><input type="checkbox" id="pw-digits" checked /> Numbers <span class="hint">0-9</span></label>
+            <label class="chk"><input type="checkbox" id="pw-symbols" checked /> Symbols <span class="hint">!@#$</span></label>
+            <label class="chk"><input type="checkbox" id="pw-ambig" /> No ambiguous <span class="hint">Il1O0</span></label>
+            <label class="chk"><input type="checkbox" id="pw-require" checked /> At least one of each</label>
+          </div>
+          <div class="control-row">
+            <label for="pw-exclude">Exclude characters</label>
+            <input type="text" id="pw-exclude" class="text-input" placeholder="e.g. {}[]" />
+          </div>
+        </div>
+
+        <button class="primary" id="pw-generate">Generate Password</button>
+      </section>
+
+      <!-- ── Passphrase ───────────────────────────────────────── -->
+      <section class="view" id="view-passphrase">
+        <h1>Passphrase Generator</h1>
+        <p class="subtitle">Memorable word-based passphrases from the 7,776-word EFF list.</p>
+
+        <div class="output-card">
+          <output class="output" id="pp-output" title="Click to copy">click generate</output>
+          <div class="output-actions">
+            <button class="icon-btn" id="pp-copy" title="Copy">📋</button>
+            <button class="icon-btn" id="pp-regen" title="Regenerate">🔄</button>
+          </div>
+        </div>
+
+        <div class="meter">
+          <div class="meter-bar"><span id="pp-meter-fill"></span></div>
+          <div class="meter-info">
+            <span id="pp-meter-label">—</span>
+            <span id="pp-meter-entropy" class="muted"></span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-row">
+            <label for="pp-words">Words</label>
+            <input type="range" id="pp-words" min="2" max="12" value="5" />
+            <output id="pp-words-val" class="length-val">5</output>
+          </div>
+          <div class="control-row">
+            <label for="pp-sep">Separator</label>
+            <select id="pp-sep" class="text-input">
+              <option value="-">- (hyphen)</option>
+              <option value=".">. (dot)</option>
+              <option value="_">_ (underscore)</option>
+              <option value=" ">(space)</option>
+              <option value="">(none)</option>
+            </select>
+          </div>
+          <div class="toggles">
+            <label class="chk"><input type="checkbox" id="pp-cap" checked /> Capitalize words</label>
+            <label class="chk"><input type="checkbox" id="pp-num" checked /> Add a number</label>
+            <label class="chk"><input type="checkbox" id="pp-sym" /> Add a symbol</label>
+          </div>
+        </div>
+
+        <button class="primary" id="pp-generate">Generate Passphrase</button>
+      </section>
+
+      <!-- ── PIN ──────────────────────────────────────────────── -->
+      <section class="view" id="view-pin">
+        <h1>PIN Generator</h1>
+        <p class="subtitle">Random numeric PIN codes.</p>
+        <div class="output-card">
+          <output class="output big" id="pin-output" title="Click to copy">— — — —</output>
+          <div class="output-actions">
+            <button class="icon-btn" id="pin-copy" title="Copy">📋</button>
+            <button class="icon-btn" id="pin-regen" title="Regenerate">🔄</button>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="control-row">
+            <label for="pin-length">Digits</label>
+            <input type="range" id="pin-length" min="3" max="16" value="6" />
+            <output id="pin-length-val" class="length-val">6</output>
+          </div>
+        </div>
+        <button class="primary" id="pin-generate">Generate PIN</button>
+      </section>
+
+      <!-- ── Bulk ─────────────────────────────────────────────── -->
+      <section class="view" id="view-bulk">
+        <h1>Bulk Generator</h1>
+        <p class="subtitle">Generate many passwords at once and export them.</p>
+        <div class="controls">
+          <div class="control-row">
+            <label for="bulk-count">Count</label>
+            <input type="number" id="bulk-count" class="text-input" min="1" max="10000" value="20" />
+          </div>
+          <div class="control-row">
+            <label for="bulk-length">Length</label>
+            <input type="range" id="bulk-length" min="4" max="128" value="20" />
+            <output id="bulk-length-val" class="length-val">20</output>
+          </div>
+          <div class="toggles">
+            <label class="chk"><input type="checkbox" id="bulk-upper" checked /> Uppercase</label>
+            <label class="chk"><input type="checkbox" id="bulk-lower" checked /> Lowercase</label>
+            <label class="chk"><input type="checkbox" id="bulk-digits" checked /> Numbers</label>
+            <label class="chk"><input type="checkbox" id="bulk-symbols" checked /> Symbols</label>
+            <label class="chk"><input type="checkbox" id="bulk-ambig" /> No ambiguous</label>
+          </div>
+        </div>
+        <div class="button-row">
+          <button class="primary" id="bulk-generate">Generate</button>
+          <button class="secondary" id="bulk-copy">Copy all</button>
+          <button class="secondary" id="bulk-export">Export…</button>
+        </div>
+        <textarea id="bulk-output" class="bulk-output" readonly placeholder="Generated passwords will appear here…"></textarea>
+      </section>
+
+      <!-- ── Hash ─────────────────────────────────────────────── -->
+      <section class="view" id="view-hash">
+        <h1>Hash &amp; Verify</h1>
+        <p class="subtitle">Produce bcrypt and SHA hashes, or verify a password against a bcrypt hash.</p>
+
+        <div class="control-row">
+          <label for="hash-input">Password</label>
+          <input type="text" id="hash-input" class="text-input wide" placeholder="Type or paste a password…" />
+        </div>
+        <div class="control-row">
+          <label for="hash-rounds">bcrypt cost</label>
+          <input type="range" id="hash-rounds" min="4" max="15" value="12" />
+          <output id="hash-rounds-val" class="length-val">12</output>
+        </div>
+        <button class="primary" id="hash-go">Hash it</button>
+
+        <div class="result-block" id="hash-results" hidden>
+          <div class="hash-row">
+            <span class="hash-label">bcrypt</span>
+            <code id="hash-bcrypt"></code>
+            <button class="icon-btn" data-copy="hash-bcrypt" title="Copy">📋</button>
+          </div>
+          <div class="hash-row">
+            <span class="hash-label">SHA-256</span>
+            <code id="hash-sha256"></code>
+            <button class="icon-btn" data-copy="hash-sha256" title="Copy">📋</button>
+          </div>
+          <div class="hash-row">
+            <span class="hash-label">SHA-512</span>
+            <code id="hash-sha512"></code>
+            <button class="icon-btn" data-copy="hash-sha512" title="Copy">📋</button>
+          </div>
+          <p class="muted" id="hash-note"></p>
+        </div>
+
+        <hr class="divider" />
+        <h2>Verify against a bcrypt hash</h2>
+        <div class="control-row">
+          <label for="verify-hash">Hash</label>
+          <input type="text" id="verify-hash" class="text-input wide" placeholder="$2a$12$…" />
+        </div>
+        <button class="secondary" id="verify-go">Verify match</button>
+        <p id="verify-result" class="verify-result"></p>
+      </section>
+
+      <!-- ── Analyze ──────────────────────────────────────────── -->
+      <section class="view" id="view-analyze">
+        <h1>Strength Analyzer</h1>
+        <p class="subtitle">Paste any password to see how it really holds up.</p>
+        <div class="control-row">
+          <label for="an-input">Password</label>
+          <input type="text" id="an-input" class="text-input wide" placeholder="Type or paste a password…" />
+        </div>
+        <div class="meter">
+          <div class="meter-bar"><span id="an-meter-fill"></span></div>
+          <div class="meter-info">
+            <span id="an-meter-label">—</span>
+            <span id="an-meter-entropy" class="muted"></span>
+          </div>
+        </div>
+        <div class="analysis-grid" id="an-crack-grid"></div>
+        <div id="an-warnings" class="notes"></div>
+        <div id="an-suggestions" class="notes suggestions"></div>
+      </section>
+
+      <!-- ── Settings ─────────────────────────────────────────── -->
+      <section class="view" id="view-settings">
+        <h1>Settings</h1>
+        <p class="subtitle">Preferences are stored locally on this device.</p>
+        <div class="controls">
+          <div class="control-row">
+            <label for="set-theme">Theme</label>
+            <select id="set-theme" class="text-input">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
+          </div>
+          <div class="control-row">
+            <label for="set-clip">Auto-clear clipboard</label>
+            <select id="set-clip" class="text-input">
+              <option value="0">Never</option>
+              <option value="10">After 10s</option>
+              <option value="20">After 20s</option>
+              <option value="30">After 30s</option>
+              <option value="60">After 60s</option>
+            </select>
+          </div>
+        </div>
+        <div class="about-card">
+          <p><strong>UltraPass</strong> — secure password toolkit.</p>
+          <p class="muted">Everything runs offline. No telemetry, no network calls, no accounts.
+          Passwords are generated with your OS CSPRNG and never leave this machine.</p>
+          <p class="muted">MIT Licensed · © 2026 Ian Louw ·
+            <a href="https://github.com/ian-louw/password-generator" target="_blank" rel="noopener">Source code</a>
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="renderer.js"></script>
+</body>
+</html>

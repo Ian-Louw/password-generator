@@ -2,3 +2,10 @@ venv/
 __pycache__/
 *.pyc
 .env
+
+# Node / Electron (desktop app)
+node_modules/
+desktop/release/
+desktop/dist/
+*.log
+.DS_Store

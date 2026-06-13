@@ -1,0 +1,79 @@
+{
+  "name": "ultrapass",
+  "productName": "UltraPass",
+  "version": "1.0.0",
+  "description": "UltraPass — a fast, private, cross-platform desktop tool for generating cryptographically secure passwords, passphrases and PINs, analysing strength, and producing bcrypt/SHA hashes. Everything runs 100% offline.",
+  "author": {
+    "name": "Ian Louw",
+    "email": "ian@ianlouw.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/ian-louw/password-generator",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ian-louw/password-generator.git"
+  },
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "test": "node --test test/*.test.js",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.ianlouw.ultrapass",
+    "productName": "UltraPass",
+    "copyright": "Copyright © 2026 Ian Louw",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "!**/*.test.js"
+    ],
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities",
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "build/icon.png",
+      "maintainer": "Ian Louw <ian@ianlouw.com>"
+    }
+  }
+}
