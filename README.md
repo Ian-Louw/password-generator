@@ -1,12 +1,138 @@
-# Password Generator & bcrypt Hasher
+<div align="center">
 
-Generate secure passwords and bcrypt hashes from your browser.
+# 🔐 UltraPass
 
-**Live app:** [free-password-generator.streamlit.app](https://free-password-generator.streamlit.app)
+### A fast, private, cross-platform password toolkit — generate, analyze & hash, 100% offline.
 
-## Run locally
+[![Build Desktop App](https://github.com/ian-louw/password-generator/actions/workflows/build.yml/badge.svg)](https://github.com/ian-louw/password-generator/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20macOS%20%7C%20Linux-555)
+![Offline](https://img.shields.io/badge/network-zero%20calls-2ecc71)
+
+<img src="docs/screenshots/password.png" alt="UltraPass password generator" width="720" />
+
+</div>
+
+---
+
+UltraPass started life as a small Streamlit web app and is now a polished
+**Electron desktop application**. Everything runs on your machine — there are no
+network calls, no telemetry, and no accounts. Your secrets never leave your
+device.
+
+## ✨ Features
+
+- **🔑 Password generator** — length 4–128, toggle character classes, exclude
+  ambiguous characters (`Il1O0`), exclude any custom characters, supply your own
+  **custom symbol set**, an optional **pronounceable** mode, and a guarantee of
+  at least one of each selected type.
+- **💬 Passphrase generator** — memorable phrases from the full **7,776-word EFF
+  Diceware list** (~12.9 bits/word), with separators, capitalization, and
+  optional number/symbol.
+- **🔢 PIN generator** — quick numeric PINs (3–16 digits).
+- **📋 Bulk mode** — generate up to 10,000 passwords at once and export to
+  `.txt`/`.csv`.
+- **🛡️ Strength analyzer** — real entropy in bits, **crack-time estimates** for
+  four attacker scenarios, plus detection of dictionary words, sequences,
+  keyboard runs, repeats, and dates — with actionable suggestions.
+- **#️⃣ Hashing & verification** — **bcrypt** (configurable cost 4–15),
+  **scrypt**, **PBKDF2-SHA256**, SHA-256, SHA-512, and a tool to verify a
+  password against an existing bcrypt hash.
+- **🔳 QR codes** — show any password/passphrase as a QR code to scan onto your
+  phone — generated locally, never uploaded.
+- **🕘 Session history** — review recently generated secrets (kept in memory
+  only, masked by default, wiped on quit).
+- **👁️ Reveal / hide & shortcuts** — mask outputs, hide-on-blur, `Ctrl/Cmd+G`
+  to regenerate, `Esc` to hide.
+- **🔒 Privacy by design** — fully offline, OS CSPRNG, auto-clearing clipboard
+  (and clipboard wipe on quit), hardened renderer (sandbox + context isolation
+  + strict CSP + deny-all permissions).
+- **🎨 Light / dark / system themes** with persisted preferences.
+
+<div align="center">
+<img src="docs/screenshots/passphrase.png" alt="Passphrase generator" width="420" />
+</div>
+
+## 📥 Download
+
+Pre-built installers for **Windows, macOS, and Linux** are published on the
+[Releases page](https://github.com/ian-louw/password-generator/releases). Every
+tagged release builds:
+
+| Platform | Format |
+|----------|--------|
+| Windows  | `.exe` installer (NSIS) + portable `.exe` |
+| macOS    | `.dmg` + `.zip` |
+| Linux    | `.AppImage` + `.deb` |
+
+> Builds are not code-signed, so your OS may show an "unidentified developer"
+> prompt on first launch. Everything is open source — feel free to build it
+> yourself (below).
+
+## 🛠️ Build from source
+
+Requires [Node.js](https://nodejs.org) 18+. The shared logic lives in
+`@ultrapass/core`; `npm install` in either app builds it automatically.
 
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+git clone https://github.com/ian-louw/password-generator.git
+cd password-generator/desktop
+npm install        # also builds the shared @ultrapass/core package
+
+npm start          # run the app
+npm test           # run the unit tests
+npm run dist       # build an installer for your OS
 ```
+
+## 🔒 Security
+
+- All randomness comes from the OS CSPRNG (`crypto.randomInt` /
+  `crypto.randomBytes`) — never `Math.random()`.
+- Unbiased selection via rejection sampling and a cryptographic Fisher–Yates
+  shuffle.
+- Renderer runs with `contextIsolation`, `sandbox`, no `nodeIntegration`, and a
+  strict Content-Security-Policy.
+- No password is ever written to disk; the clipboard can auto-clear.
+
+See [SECURITY.md](SECURITY.md) for the full policy and how to report issues.
+
+## 🌐 Web version (Next.js + shadcn/ui)
+
+A matching browser version lives in [`web/`](web), built with **Next.js 14
+(App Router) + TypeScript + Tailwind + shadcn/ui**. The core logic is ported to
+TypeScript and runs **100% client-side** using the **Web Crypto API** — no
+password, passphrase, or hash is ever sent to a server.
+
+<div align="center">
+<img src="docs/screenshots/web-dark.png" alt="UltraPass web (dark)" width="380" />
+<img src="docs/screenshots/web-light.png" alt="UltraPass web (light)" width="380" />
+</div>
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
+```
+
+### Deploy to Vercel
+
+A ready-to-use workflow lives at [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml).
+It is **opt-in**: to enable it,
+
+1. Create a Vercel project and set its **Root Directory** to `web`.
+2. Add repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+3. Add a repository variable `ENABLE_VERCEL` = `true`.
+
+Pushes to `main` that touch `web/` or `core/` then deploy automatically. Because
+everything is client-side, the app can also be produced as a fully static site —
+enable `output: 'export'` in `next.config.mjs`.
+
+## 🤝 Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## 📄 License
+
+[MIT](LICENSE) © 2026 Ian Louw. Bundles the EFF Large Diceware Wordlist
+([CC BY 3.0 US](https://www.eff.org/dice)).

@@ -1,0 +1,20 @@
+{
+  "name": "@ultrapass/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Platform-agnostic password/passphrase/strength logic shared by the UltraPass web and desktop apps.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

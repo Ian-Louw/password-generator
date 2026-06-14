@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+    --primary: 211 64% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 94%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214.3 31.8% 88%;
+    --input: 214.3 31.8% 88%;
+    --ring: 211 64% 57%;
+    --radius: 0.65rem;
+  }
+
+  .dark {
+    --background: 222 18% 11%;
+    --foreground: 210 40% 96%;
+    --card: 222 16% 14%;
+    --card-foreground: 210 40% 96%;
+    --popover: 222 16% 14%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 211 70% 62%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 19% 20%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 217 19% 20%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 19% 24%;
+    --accent-foreground: 210 40% 96%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 19% 24%;
+    --input: 217 19% 26%;
+    --ring: 211 70% 62%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+.font-mono-pw {
+  font-family: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+
+.text-security-disc {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
