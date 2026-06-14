@@ -46,6 +46,30 @@ function bcryptVerify(password, hash) {
   }
 }
 
+/**
+ * Derive a key with scrypt and return a self-describing string:
+ *   scrypt$N$r$p$<salt-b64>$<hash-b64>
+ */
+function scryptHash(password, opts = {}) {
+  const N = opts.N || 16384; // CPU/memory cost
+  const r = opts.r || 8;
+  const p = opts.p || 1;
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(password, salt, 32, { N, r, p, maxmem: 64 * 1024 * 1024 });
+  return `scrypt$${N}$${r}$${p}$${salt.toString('base64')}$${key.toString('base64')}`;
+}
+
+/**
+ * Derive a key with PBKDF2-HMAC-SHA256 (Django-style encoding):
+ *   pbkdf2_sha256$<iterations>$<salt-b64>$<hash-b64>
+ */
+function pbkdf2Hash(password, iterations = 600000) {
+  const iter = Math.max(1000, Number.parseInt(iterations, 10) || 600000);
+  const salt = crypto.randomBytes(16);
+  const key = crypto.pbkdf2Sync(password, salt, iter, 32, 'sha256');
+  return `pbkdf2_sha256$${iter}$${salt.toString('base64')}$${key.toString('base64')}`;
+}
+
 /** Hex digest for a given hash algorithm (sha256, sha512, sha1, md5). */
 function digest(password, algorithm = 'sha256') {
   return crypto.createHash(algorithm).update(password, 'utf-8').digest('hex');
@@ -64,6 +88,8 @@ function allDigests(password) {
 module.exports = {
   bcryptHash,
   bcryptVerify,
+  scryptHash,
+  pbkdf2Hash,
   digest,
   allDigests,
   truncateForBcrypt,

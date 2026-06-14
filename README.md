@@ -23,7 +23,8 @@ device.
 ## ✨ Features
 
 - **🔑 Password generator** — length 4–128, toggle character classes, exclude
-  ambiguous characters (`Il1O0`), exclude any custom characters, and guarantee
+  ambiguous characters (`Il1O0`), exclude any custom characters, supply your own
+  **custom symbol set**, an optional **pronounceable** mode, and a guarantee of
   at least one of each selected type.
 - **💬 Passphrase generator** — memorable phrases from the full **7,776-word EFF
   Diceware list** (~12.9 bits/word), with separators, capitalization, and
@@ -34,10 +35,18 @@ device.
 - **🛡️ Strength analyzer** — real entropy in bits, **crack-time estimates** for
   four attacker scenarios, plus detection of dictionary words, sequences,
   keyboard runs, repeats, and dates — with actionable suggestions.
-- **#️⃣ Hashing & verification** — bcrypt (configurable cost 4–15), SHA-256,
-  SHA-512, and a tool to verify a password against an existing bcrypt hash.
-- **🔒 Privacy by design** — fully offline, OS CSPRNG, auto-clearing clipboard,
-  hardened renderer (sandbox + context isolation + strict CSP).
+- **#️⃣ Hashing & verification** — **bcrypt** (configurable cost 4–15),
+  **scrypt**, **PBKDF2-SHA256**, SHA-256, SHA-512, and a tool to verify a
+  password against an existing bcrypt hash.
+- **🔳 QR codes** — show any password/passphrase as a QR code to scan onto your
+  phone — generated locally, never uploaded.
+- **🕘 Session history** — review recently generated secrets (kept in memory
+  only, masked by default, wiped on quit).
+- **👁️ Reveal / hide & shortcuts** — mask outputs, hide-on-blur, `Ctrl/Cmd+G`
+  to regenerate, `Esc` to hide.
+- **🔒 Privacy by design** — fully offline, OS CSPRNG, auto-clearing clipboard
+  (and clipboard wipe on quit), hardened renderer (sandbox + context isolation
+  + strict CSP + deny-all permissions).
 - **🎨 Light / dark / system themes** with persisted preferences.
 
 <div align="center">

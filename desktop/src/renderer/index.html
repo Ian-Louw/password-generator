@@ -27,6 +27,7 @@
         <button class="nav-item" data-view="bulk">📋 <span>Bulk</span></button>
         <button class="nav-item" data-view="hash">#️⃣ <span>Hash</span></button>
         <button class="nav-item" data-view="analyze">🛡️ <span>Analyze</span></button>
+        <button class="nav-item" data-view="history">🕘 <span>History</span></button>
         <button class="nav-item" data-view="settings">⚙️ <span>Settings</span></button>
       </nav>
       <div class="sidebar-footer">
@@ -45,6 +46,8 @@
         <div class="output-card">
           <output class="output" id="pw-output" title="Click to copy">click generate</output>
           <div class="output-actions">
+            <button class="icon-btn" id="pw-reveal" title="Show / hide">👁️</button>
+            <button class="icon-btn" id="pw-qr" title="Show QR code">🔳</button>
             <button class="icon-btn" id="pw-copy" title="Copy">📋</button>
             <button class="icon-btn" id="pw-regen" title="Regenerate">🔄</button>
           </div>
@@ -72,10 +75,15 @@
             <label class="chk"><input type="checkbox" id="pw-symbols" checked /> Symbols <span class="hint">!@#$</span></label>
             <label class="chk"><input type="checkbox" id="pw-ambig" /> No ambiguous <span class="hint">Il1O0</span></label>
             <label class="chk"><input type="checkbox" id="pw-require" checked /> At least one of each</label>
+            <label class="chk"><input type="checkbox" id="pw-pron" /> Pronounceable <span class="hint">easy to say</span></label>
           </div>
           <div class="control-row">
             <label for="pw-exclude">Exclude characters</label>
             <input type="text" id="pw-exclude" class="text-input" placeholder="e.g. {}[]" />
+          </div>
+          <div class="control-row">
+            <label for="pw-symbolset">Custom symbols</label>
+            <input type="text" id="pw-symbolset" class="text-input" placeholder="leave blank for default !@#$…" />
           </div>
         </div>
 
@@ -90,6 +98,8 @@
         <div class="output-card">
           <output class="output" id="pp-output" title="Click to copy">click generate</output>
           <div class="output-actions">
+            <button class="icon-btn" id="pp-reveal" title="Show / hide">👁️</button>
+            <button class="icon-btn" id="pp-qr" title="Show QR code">🔳</button>
             <button class="icon-btn" id="pp-copy" title="Copy">📋</button>
             <button class="icon-btn" id="pp-regen" title="Regenerate">🔄</button>
           </div>
@@ -212,6 +222,16 @@
             <code id="hash-sha512"></code>
             <button class="icon-btn" data-copy="hash-sha512" title="Copy">📋</button>
           </div>
+          <div class="hash-row">
+            <span class="hash-label">scrypt</span>
+            <code id="hash-scrypt"></code>
+            <button class="icon-btn" data-copy="hash-scrypt" title="Copy">📋</button>
+          </div>
+          <div class="hash-row">
+            <span class="hash-label">PBKDF2</span>
+            <code id="hash-pbkdf2"></code>
+            <button class="icon-btn" data-copy="hash-pbkdf2" title="Copy">📋</button>
+          </div>
           <p class="muted" id="hash-note"></p>
         </div>
 
@@ -245,6 +265,17 @@
         <div id="an-suggestions" class="notes suggestions"></div>
       </section>
 
+      <!-- ── History ──────────────────────────────────────────── -->
+      <section class="view" id="view-history">
+        <h1>Session History</h1>
+        <p class="subtitle">Recently generated secrets, kept in memory only and cleared when you quit.</p>
+        <div class="button-row">
+          <button class="secondary" id="hist-clear">Clear history</button>
+        </div>
+        <ul class="history-list" id="hist-list"></ul>
+        <p class="muted" id="hist-empty">Nothing generated yet this session.</p>
+      </section>
+
       <!-- ── Settings ─────────────────────────────────────────── -->
       <section class="view" id="view-settings">
         <h1>Settings</h1>
@@ -268,6 +299,10 @@
               <option value="60">After 60s</option>
             </select>
           </div>
+          <div class="toggles">
+            <label class="chk"><input type="checkbox" id="set-blur" /> Hide secrets when window loses focus</label>
+            <label class="chk"><input type="checkbox" id="set-quitclip" checked /> Wipe copied secret on quit</label>
+          </div>
         </div>
         <div class="about-card">
           <p><strong>UltraPass</strong> — secure password toolkit.</p>
@@ -282,6 +317,17 @@
   </div>
 
   <div id="toast" class="toast"></div>
+
+  <!-- QR modal -->
+  <div id="qr-modal" class="modal" hidden>
+    <div class="modal-card">
+      <p class="modal-title">Scan to transfer</p>
+      <img id="qr-img" alt="QR code" />
+      <p class="muted modal-hint">Point your phone's camera at the code. Nothing leaves this device.</p>
+      <button class="secondary" id="qr-close">Close</button>
+    </div>
+  </div>
+
   <script src="renderer.js"></script>
 </body>
 </html>

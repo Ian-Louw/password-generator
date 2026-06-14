@@ -53,6 +53,26 @@ test('throws when no character types are selected', () => {
   );
 });
 
+test('customSymbols replaces the default symbol pool', () => {
+  const pw = generator.generatePassword({
+    length: 100, uppercase: false, lowercase: false, digits: false,
+    symbols: true, customSymbols: '#@',
+  });
+  assert.match(pw, /^[#@]+$/);
+});
+
+test('pronounceable password has correct length and digits', () => {
+  const pw = generator.generatePronounceable({ length: 16, uppercase: true, digits: true });
+  assert.strictEqual(pw.length, 16);
+  assert.match(pw, /[0-9]/);
+  assert.match(pw, /[a-z]/i);
+});
+
+test('pronounceable without digits is letters only', () => {
+  const pw = generator.generatePronounceable({ length: 14, digits: false });
+  assert.match(pw, /^[a-zA-Z]+$/);
+});
+
 test('PIN is all digits and correct length', () => {
   const pin = generator.generatePin(8);
   assert.match(pin, /^\d{8}$/);
@@ -129,6 +149,26 @@ test('bcrypt flags truncation beyond 72 bytes', () => {
   const long = 'a'.repeat(100);
   const { truncated } = hasher.bcryptHash(long, 6);
   assert.strictEqual(truncated, true);
+});
+
+test('scrypt hash is self-describing and verifiable', () => {
+  const crypto = require('node:crypto');
+  const hash = hasher.scryptHash('hunter2');
+  const [scheme, N, r, p, saltB64, keyB64] = hash.split('$');
+  assert.strictEqual(scheme, 'scrypt');
+  const salt = Buffer.from(saltB64, 'base64');
+  const derived = crypto.scryptSync('hunter2', salt, 32, { N: +N, r: +r, p: +p, maxmem: 64 * 1024 * 1024 });
+  assert.strictEqual(derived.toString('base64'), keyB64);
+});
+
+test('pbkdf2 hash is self-describing and verifiable', () => {
+  const crypto = require('node:crypto');
+  const hash = hasher.pbkdf2Hash('hunter2', 50000);
+  const [scheme, iter, saltB64, keyB64] = hash.split('$');
+  assert.strictEqual(scheme, 'pbkdf2_sha256');
+  const salt = Buffer.from(saltB64, 'base64');
+  const derived = crypto.pbkdf2Sync('hunter2', salt, +iter, 32, 'sha256');
+  assert.strictEqual(derived.toString('base64'), keyB64);
 });
 
 test('digests are deterministic and correct length', () => {

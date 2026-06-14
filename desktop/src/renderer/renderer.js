@@ -21,6 +21,74 @@ async function copy(text) {
   toast(clearSeconds > 0 ? `Copied · clears in ${clearSeconds}s` : 'Copied to clipboard');
 }
 
+// Set an output value while preserving its current masked/revealed state.
+function setOutput(id, value) {
+  $(id).textContent = value;
+}
+
+// ── Reveal / hide ──────────────────────────────────────────────────────────
+
+function toggleMask(outputId, btn) {
+  const el = $(outputId);
+  const masked = el.classList.toggle('masked');
+  if (btn) btn.textContent = masked ? '🙈' : '👁️';
+}
+
+function maskAll() {
+  ['pw-output', 'pp-output'].forEach((id) => $(id).classList.add('masked'));
+  $('pw-reveal').textContent = '👁️';
+  $('pp-reveal').textContent = '👁️';
+}
+
+// ── Session history (in-memory only) ───────────────────────────────────────
+
+const history = [];
+const HISTORY_MAX = 50;
+
+function addHistory(value, kind) {
+  if (!value || value === history[0]?.value) return;
+  history.unshift({ value, kind });
+  if (history.length > HISTORY_MAX) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = $('hist-list');
+  list.innerHTML = '';
+  $('hist-empty').style.display = history.length ? 'none' : 'block';
+  for (const { value, kind } of history) {
+    const li = document.createElement('li');
+    li.className = 'history-item';
+    li.innerHTML = `<span class="h-tag"></span><span class="h-val masked"></span>
+      <button class="icon-btn h-reveal" title="Show / hide">👁️</button>
+      <button class="icon-btn h-copy" title="Copy">📋</button>`;
+    li.querySelector('.h-tag').textContent = kind;
+    const val = li.querySelector('.h-val');
+    val.textContent = value;
+    li.querySelector('.h-reveal').addEventListener('click', (e) => {
+      const m = val.classList.toggle('masked');
+      e.currentTarget.textContent = m ? '👁️' : '🙈';
+    });
+    li.querySelector('.h-copy').addEventListener('click', () => copy(value));
+    list.appendChild(li);
+  }
+}
+
+// ── QR code modal ──────────────────────────────────────────────────────────
+
+async function showQr(text) {
+  if (!text || text === 'click generate') return toast('Generate something first');
+  const dataUrl = await api.qrCode(text);
+  if (!dataUrl) return;
+  $('qr-img').src = dataUrl;
+  $('qr-modal').hidden = false;
+}
+
+function closeQr() {
+  $('qr-modal').hidden = true;
+  $('qr-img').src = '';
+}
+
 function paintMeter(fillEl, labelEl, entropyEl, result) {
   fillEl.style.width = `${result.score}%`;
   fillEl.style.background = result.color;
@@ -51,19 +119,25 @@ function pwOptions() {
     symbols: $('pw-symbols').checked,
     excludeAmbiguous: $('pw-ambig').checked,
     excludeChars: $('pw-exclude').value,
+    customSymbols: $('pw-symbolset').value,
     requireEach: $('pw-require').checked,
+    pronounceable: $('pw-pron').checked,
   };
 }
 
 async function generatePassword() {
   try {
-    const pw = await api.generatePassword(pwOptions());
-    $('pw-output').textContent = pw;
+    const opts = pwOptions();
+    const pw = opts.pronounceable
+      ? await api.generatePronounceable({ length: opts.length, uppercase: opts.uppercase, digits: opts.digits })
+      : await api.generatePassword(opts);
+    setOutput('pw-output', pw);
     const result = await api.evaluateStrength(pw);
     paintMeter($('pw-meter-fill'), $('pw-meter-label'), $('pw-meter-entropy'), result);
     $('pw-crack').textContent = `Offline crack time (fast GPU): ${result.crackTimes.offline_fast}`;
+    addHistory(pw, 'password');
   } catch (err) {
-    $('pw-output').textContent = err.message || 'Error';
+    setOutput('pw-output', err.message || 'Error');
     toast(err.message || 'Error');
   }
 }
@@ -72,14 +146,17 @@ $('pw-length').addEventListener('input', (e) => {
   $('pw-length-val').textContent = e.target.value;
 });
 $('pw-length').addEventListener('change', generatePassword);
-['pw-upper', 'pw-lower', 'pw-digits', 'pw-symbols', 'pw-ambig', 'pw-require'].forEach((id) =>
+['pw-upper', 'pw-lower', 'pw-digits', 'pw-symbols', 'pw-ambig', 'pw-require', 'pw-pron'].forEach((id) =>
   $(id).addEventListener('change', generatePassword)
 );
 $('pw-exclude').addEventListener('change', generatePassword);
+$('pw-symbolset').addEventListener('change', generatePassword);
 $('pw-generate').addEventListener('click', generatePassword);
 $('pw-regen').addEventListener('click', generatePassword);
 $('pw-copy').addEventListener('click', () => copy($('pw-output').textContent));
 $('pw-output').addEventListener('click', () => copy($('pw-output').textContent));
+$('pw-reveal').addEventListener('click', () => toggleMask('pw-output', $('pw-reveal')));
+$('pw-qr').addEventListener('click', () => showQr($('pw-output').textContent));
 
 // ── Passphrase view ──────────────────────────────────────────────────────────
 
@@ -95,11 +172,12 @@ function ppOptions() {
 
 async function generatePassphrase() {
   const phrase = await api.generatePassphrase(ppOptions());
-  $('pp-output').textContent = phrase;
+  setOutput('pp-output', phrase);
   const result = await api.evaluateStrength(phrase);
   const baseEntropy = await api.passphraseEntropy(+$('pp-words').value);
   paintMeter($('pp-meter-fill'), $('pp-meter-label'), $('pp-meter-entropy'), result);
   $('pp-meter-entropy').textContent = `~${baseEntropy} bits from words`;
+  addHistory(phrase, 'passphrase');
 }
 
 $('pp-words').addEventListener('input', (e) => {
@@ -113,6 +191,8 @@ $('pp-generate').addEventListener('click', generatePassphrase);
 $('pp-regen').addEventListener('click', generatePassphrase);
 $('pp-copy').addEventListener('click', () => copy($('pp-output').textContent));
 $('pp-output').addEventListener('click', () => copy($('pp-output').textContent));
+$('pp-reveal').addEventListener('click', () => toggleMask('pp-output', $('pp-reveal')));
+$('pp-qr').addEventListener('click', () => showQr($('pp-output').textContent));
 
 // ── PIN view ─────────────────────────────────────────────────────────────────
 
@@ -176,13 +256,17 @@ $('hash-rounds').addEventListener('input', (e) => {
 $('hash-go').addEventListener('click', async () => {
   const pw = $('hash-input').value;
   if (!pw) return toast('Enter a password first');
-  const [bc, dg] = await Promise.all([
+  const [bc, dg, sc, pk] = await Promise.all([
     api.bcryptHash(pw, +$('hash-rounds').value),
     api.digests(pw),
+    api.scryptHash(pw),
+    api.pbkdf2Hash(pw),
   ]);
   $('hash-bcrypt').textContent = bc.hash;
   $('hash-sha256').textContent = dg.sha256;
   $('hash-sha512').textContent = dg.sha512;
+  $('hash-scrypt').textContent = sc;
+  $('hash-pbkdf2').textContent = pk;
   $('hash-note').textContent = bc.truncated
     ? 'Note: bcrypt only uses the first 72 bytes — your password was truncated for hashing.'
     : `bcrypt cost factor ${bc.rounds}.`;
@@ -272,6 +356,48 @@ $('set-clip').addEventListener('change', async (e) => {
   settings = await api.saveSettings({ clipboardClearSeconds: +e.target.value });
   toast('Saved');
 });
+$('set-blur').addEventListener('change', async (e) => {
+  settings = await api.saveSettings({ hideOnBlur: e.target.checked });
+  toast('Saved');
+});
+$('set-quitclip').addEventListener('change', async (e) => {
+  settings = await api.saveSettings({ clearClipboardOnQuit: e.target.checked });
+  toast('Saved');
+});
+
+// ── History / QR / shortcuts / blur ─────────────────────────────────────────
+
+$('hist-clear').addEventListener('click', () => {
+  history.length = 0;
+  renderHistory();
+  toast('History cleared');
+});
+$('qr-close').addEventListener('click', closeQr);
+$('qr-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'qr-modal') closeQr();
+});
+
+// Hide displayed secrets when the window loses focus (if enabled).
+window.addEventListener('blur', () => {
+  if (settings && settings.hideOnBlur) maskAll();
+});
+
+// Keyboard shortcuts: Ctrl/Cmd+G regenerates the active view; Esc closes the
+// QR modal or masks secrets.
+document.addEventListener('keydown', (e) => {
+  const mod = e.ctrlKey || e.metaKey;
+  if (mod && e.key.toLowerCase() === 'g') {
+    e.preventDefault();
+    const active = document.querySelector('.nav-item.active')?.dataset.view;
+    if (active === 'password') generatePassword();
+    else if (active === 'passphrase') generatePassphrase();
+    else if (active === 'pin') generatePin();
+    else if (active === 'bulk') generateBulk();
+  } else if (e.key === 'Escape') {
+    if (!$('qr-modal').hidden) closeQr();
+    else maskAll();
+  }
+});
 
 // ── Init: load settings, apply defaults to controls, first generate ──────────
 
@@ -281,6 +407,8 @@ async function init() {
   // Settings controls
   $('set-theme').value = settings.theme;
   $('set-clip').value = String(settings.clipboardClearSeconds);
+  $('set-blur').checked = !!settings.hideOnBlur;
+  $('set-quitclip').checked = settings.clearClipboardOnQuit !== false;
 
   // Password defaults
   const p = settings.password;
@@ -291,7 +419,9 @@ async function init() {
   $('pw-symbols').checked = p.symbols;
   $('pw-ambig').checked = p.excludeAmbiguous;
   $('pw-require').checked = p.requireEach;
+  $('pw-pron').checked = !!p.pronounceable;
   $('pw-exclude').value = p.excludeChars || '';
+  $('pw-symbolset').value = p.customSymbols || '';
   $('bulk-length').value = p.length; $('bulk-length-val').textContent = p.length;
 
   // Passphrase defaults
@@ -308,7 +438,8 @@ async function init() {
 
   // Persist generator preferences as the user tweaks them.
   const persistPw = () => api.saveSettings({ password: pwOptions() });
-  ['pw-length', 'pw-upper', 'pw-lower', 'pw-digits', 'pw-symbols', 'pw-ambig', 'pw-require', 'pw-exclude']
+  ['pw-length', 'pw-upper', 'pw-lower', 'pw-digits', 'pw-symbols', 'pw-ambig', 'pw-require',
+   'pw-pron', 'pw-exclude', 'pw-symbolset']
     .forEach((id) => $(id).addEventListener('change', persistPw));
   const persistPp = () => api.saveSettings({ passphrase: ppOptions() });
   ['pp-words', 'pp-sep', 'pp-cap', 'pp-num', 'pp-sym']

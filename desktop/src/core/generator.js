@@ -48,7 +48,11 @@ function buildPools(options = {}) {
     symbols = true,
     excludeAmbiguous = false,
     excludeChars = '',
+    customSymbols = '',
   } = options;
+
+  // A non-empty custom set overrides the default symbol pool.
+  const symbolPool = customSymbols && customSymbols.length ? customSymbols : POOLS.symbols;
 
   const exclude = new Set(excludeChars.split(''));
   if (excludeAmbiguous) {
@@ -65,7 +69,7 @@ function buildPools(options = {}) {
   if (uppercase) pools.push(filter(POOLS.uppercase));
   if (lowercase) pools.push(filter(POOLS.lowercase));
   if (digits) pools.push(filter(POOLS.digits));
-  if (symbols) pools.push(filter(POOLS.symbols));
+  if (symbols) pools.push(filter(symbolPool));
 
   // Drop any pool that became empty after filtering.
   const nonEmpty = pools.filter((p) => p.length > 0);
@@ -112,6 +116,42 @@ function generatePassword(options = {}) {
   return shuffle(chars).join('');
 }
 
+// Syllable building blocks for pronounceable passwords. Kept free of ambiguous
+// or hard-to-say clusters so the result is easy to type and read aloud.
+const CONSONANTS = 'bcdfghjkmnpqrstvwxz';
+const VOWELS = 'aeiou';
+
+/**
+ * Generate an easy-to-pronounce password by alternating consonants and vowels,
+ * optionally sprinkling in uppercase letters and digits.
+ *
+ * @param {object} options
+ * @param {number} options.length     target length (default 16)
+ * @param {boolean} options.uppercase capitalize some letters (default true)
+ * @param {boolean} options.digits    append a short digit group (default true)
+ * @returns {string}
+ */
+function generatePronounceable(options = {}) {
+  const length = clampLength(options.length, 6, 128, 16);
+  const wantUpper = options.uppercase !== false;
+  const wantDigits = options.digits !== false;
+
+  // Reserve a couple of trailing characters for digits when requested.
+  const digitCount = wantDigits ? Math.min(3, Math.max(2, Math.floor(length / 8))) : 0;
+  const letterCount = length - digitCount;
+
+  let out = '';
+  for (let i = 0; i < letterCount; i++) {
+    let ch = i % 2 === 0 ? pick(CONSONANTS) : pick(VOWELS);
+    // Occasionally uppercase a letter for class diversity.
+    if (wantUpper && randomInt(4) === 0) ch = ch.toUpperCase();
+    out += ch;
+  }
+  for (let i = 0; i < digitCount; i++) out += pick(POOLS.digits);
+
+  return out;
+}
+
 /** Generate a numeric PIN of the given length. */
 function generatePin(length = 6) {
   const n = clampLength(length, 3, 32, 6);
@@ -141,6 +181,7 @@ module.exports = {
   shuffle,
   buildPools,
   generatePassword,
+  generatePronounceable,
   generatePin,
   generateBulk,
 };

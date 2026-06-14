@@ -9,6 +9,7 @@ const {
   dialog,
   nativeTheme,
   clipboard,
+  session,
 } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -17,6 +18,7 @@ const generator = require('./src/core/generator');
 const passphrase = require('./src/core/passphrase');
 const strength = require('./src/core/strength');
 const hasher = require('./src/core/hasher');
+const qr = require('./src/core/qr');
 
 const isDev = process.argv.includes('--dev');
 const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
@@ -24,6 +26,8 @@ const SETTINGS_PATH = path.join(app.getPath('userData'), 'settings.json');
 const DEFAULT_SETTINGS = {
   theme: 'system', // 'light' | 'dark' | 'system'
   clipboardClearSeconds: 20, // 0 disables auto-clear
+  hideOnBlur: false, // clear displayed secrets when the window loses focus
+  clearClipboardOnQuit: true, // wipe a copied secret when the app exits
   password: {
     length: 20,
     uppercase: true,
@@ -45,6 +49,9 @@ const DEFAULT_SETTINGS = {
 
 let mainWindow = null;
 let clipboardTimer = null;
+// Remember the last secret we placed on the clipboard so we can wipe it on quit
+// (only if it is still there — we never clobber something the user copied later).
+let lastCopiedSecret = null;
 
 // ── Settings persistence ──────────────────────────────────────────────────────
 
@@ -106,8 +113,11 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      nodeIntegrationInWorker: false,
       sandbox: true,
+      webviewTag: false, // we never embed <webview>; disabling shrinks attack surface
       spellcheck: false,
+      enableBlinkFeatures: '',
     },
   });
 
@@ -216,6 +226,7 @@ function buildMenu() {
 
 function registerIpc() {
   ipcMain.handle('generate-password', (_e, opts) => generator.generatePassword(opts));
+  ipcMain.handle('generate-pronounceable', (_e, opts) => generator.generatePronounceable(opts));
   ipcMain.handle('generate-passphrase', (_e, opts) => passphrase.generatePassphrase(opts));
   ipcMain.handle('generate-pin', (_e, len) => generator.generatePin(len));
   ipcMain.handle('generate-bulk', (_e, count, opts) => generator.generateBulk(count, opts));
@@ -224,20 +235,26 @@ function registerIpc() {
 
   ipcMain.handle('bcrypt-hash', (_e, pw, rounds) => hasher.bcryptHash(pw, rounds));
   ipcMain.handle('bcrypt-verify', (_e, pw, hash) => hasher.bcryptVerify(pw, hash));
+  ipcMain.handle('scrypt-hash', (_e, pw) => hasher.scryptHash(pw));
+  ipcMain.handle('pbkdf2-hash', (_e, pw) => hasher.pbkdf2Hash(pw));
   ipcMain.handle('digests', (_e, pw) => hasher.allDigests(pw));
+  ipcMain.handle('qr-code', (_e, text) => qr.toDataURL(text, nativeTheme.shouldUseDarkColors));
 
   ipcMain.handle('get-settings', () => loadSettings());
   ipcMain.handle('save-settings', (_e, s) => saveSettings(s));
 
   // Clipboard with optional auto-clear for sensitive data.
   ipcMain.handle('copy-to-clipboard', (_e, text) => {
-    clipboard.writeText(String(text ?? ''));
+    const value = String(text ?? '');
+    clipboard.writeText(value);
+    lastCopiedSecret = value;
     if (clipboardTimer) clearTimeout(clipboardTimer);
     const { clipboardClearSeconds } = loadSettings();
     if (clipboardClearSeconds > 0) {
       clipboardTimer = setTimeout(() => {
         // Only clear if the clipboard still holds what we wrote.
-        if (clipboard.readText() === String(text ?? '')) clipboard.clear();
+        if (clipboard.readText() === value) clipboard.clear();
+        if (lastCopiedSecret === value) lastCopiedSecret = null;
         clipboardTimer = null;
       }, clipboardClearSeconds * 1000);
     }
@@ -259,6 +276,47 @@ function registerIpc() {
   });
 }
 
+// ── Security hardening ──────────────────────────────────────────────────────────
+
+function hardenSession() {
+  const ses = session.defaultSession;
+
+  // This is an offline app: deny every permission request (camera, mic,
+  // geolocation, notifications, clipboard-read, etc.) outright.
+  ses.setPermissionRequestHandler((_wc, _permission, callback) => callback(false));
+  ses.setPermissionCheckHandler(() => false);
+
+  // Block any attempt to load remote resources. Only local app files load.
+  ses.webRequest.onBeforeRequest((details, callback) => {
+    const allowed =
+      details.url.startsWith('file://') ||
+      details.url.startsWith('devtools://') ||
+      details.url.startsWith('chrome-extension://') ||
+      details.url.startsWith('data:');
+    callback({ cancel: !allowed });
+  });
+}
+
+// Refuse to attach the preload to, or allow navigation in, any unexpected
+// web contents (defence in depth on top of the per-window handlers).
+app.on('web-contents-created', (_event, contents) => {
+  contents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://')) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  contents.on('will-navigate', (event, url) => {
+    if (!url.startsWith('file://')) event.preventDefault();
+  });
+  contents.on('will-attach-webview', (event) => event.preventDefault());
+});
+
+function wipeClipboardIfSecret() {
+  if (lastCopiedSecret && clipboard.readText() === lastCopiedSecret) {
+    clipboard.clear();
+  }
+  lastCopiedSecret = null;
+}
+
 // ── App lifecycle ────────────────────────────────────────────────────────────────
 
 const gotLock = app.requestSingleInstanceLock();
@@ -273,6 +331,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(() => {
+    hardenSession();
     registerIpc();
     buildMenu();
     createWindow();
@@ -284,5 +343,9 @@ if (!gotLock) {
 
   app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
+  });
+
+  app.on('before-quit', () => {
+    if (loadSettings().clearClipboardOnQuit) wipeClipboardIfSecret();
   });
 }

@@ -7,6 +7,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 // action goes through one of these audited channels.
 contextBridge.exposeInMainWorld('ultrapass', {
   generatePassword: (opts) => ipcRenderer.invoke('generate-password', opts),
+  generatePronounceable: (opts) => ipcRenderer.invoke('generate-pronounceable', opts),
   generatePassphrase: (opts) => ipcRenderer.invoke('generate-passphrase', opts),
   generatePin: (len) => ipcRenderer.invoke('generate-pin', len),
   generateBulk: (count, opts) => ipcRenderer.invoke('generate-bulk', count, opts),
@@ -16,7 +17,10 @@ contextBridge.exposeInMainWorld('ultrapass', {
 
   bcryptHash: (pw, rounds) => ipcRenderer.invoke('bcrypt-hash', pw, rounds),
   bcryptVerify: (pw, hash) => ipcRenderer.invoke('bcrypt-verify', pw, hash),
+  scryptHash: (pw) => ipcRenderer.invoke('scrypt-hash', pw),
+  pbkdf2Hash: (pw) => ipcRenderer.invoke('pbkdf2-hash', pw),
   digests: (pw) => ipcRenderer.invoke('digests', pw),
+  qrCode: (text) => ipcRenderer.invoke('qr-code', text),
 
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (s) => ipcRenderer.invoke('save-settings', s),
