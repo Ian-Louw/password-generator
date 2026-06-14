@@ -7,14 +7,17 @@ welcome — bug reports, feature ideas, docs, and code.
 
 ```
 .
-├── app.py, generator.py, ...   # Streamlit web version (Python)
 ├── desktop/                    # UltraPass desktop app (Electron)
 │   ├── main.js                 # Electron main process + IPC
 │   ├── preload.js              # Secure context bridge
 │   ├── src/core/               # Pure, dependency-light logic (testable in Node)
 │   ├── src/renderer/           # UI (HTML/CSS/JS)
 │   └── test/                   # node:test unit tests
-└── .github/workflows/build.yml # CI: test + cross-platform installers
+├── web/                        # UltraPass web app (Next.js + shadcn/ui)
+│   ├── app/                    # App Router pages + layout
+│   ├── components/             # UI + shadcn/ui components + feature tabs
+│   └── lib/core/               # Logic ported to TypeScript (Web Crypto)
+└── .github/workflows/build.yml # CI: test + cross-platform installers + web build
 ```
 
 ## Developing the desktop app
@@ -30,6 +33,19 @@ npm test         # run the unit tests
 The security-sensitive logic lives in `src/core/` and is plain Node with no DOM
 or Electron dependencies, so it is easy to unit test. Please add or update tests
 in `desktop/test/` for any change to that code.
+
+## Developing the web app
+
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build (also type-checks)
+```
+
+The web app mirrors the desktop logic in TypeScript under `web/lib/core/`,
+using the Web Crypto API so it stays fully client-side. UI is built with
+shadcn/ui components in `web/components/ui/`.
 
 ## Building installers locally
 

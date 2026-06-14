@@ -95,16 +95,28 @@ npm run dist       # build an installer for your OS
 
 See [SECURITY.md](SECURITY.md) for the full policy and how to report issues.
 
-## 🌐 Web version
+## 🌐 Web version (Next.js + shadcn/ui)
 
-The original browser version (Python + Streamlit) still lives at the repo root:
+A matching browser version lives in [`web/`](web), built with **Next.js 14
+(App Router) + TypeScript + Tailwind + shadcn/ui**. The core logic is ported to
+TypeScript and runs **100% client-side** using the **Web Crypto API** — no
+password, passphrase, or hash is ever sent to a server.
+
+<div align="center">
+<img src="docs/screenshots/web-dark.png" alt="UltraPass web (dark)" width="380" />
+<img src="docs/screenshots/web-light.png" alt="UltraPass web (light)" width="380" />
+</div>
 
 ```bash
-pip install -r requirements.txt
-streamlit run app.py
+cd web
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # production build
 ```
 
-**Live app:** [free-password-generator.streamlit.app](https://free-password-generator.streamlit.app)
+It deploys cleanly to Vercel/Netlify, and (because everything is client-side)
+can also be produced as a fully static site — just enable `output: 'export'` in
+`next.config.mjs`.
 
 ## 🤝 Contributing
 
