@@ -10,8 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SecretOutput } from "@/components/secret-output";
 import { StrengthMeter } from "@/components/strength-meter";
-import { generatePassword, generatePronounceable, type PasswordOptions } from "@/lib/core/generator";
-import { evaluateStrength, type StrengthResult } from "@/lib/core/strength";
+import {
+  generatePassword,
+  generatePronounceable,
+  evaluateStrength,
+  type PasswordOptions,
+  type StrengthResult,
+} from "@ultrapass/core";
 
 const TOGGLES: { key: keyof PasswordOptions; label: string; hint?: string }[] = [
   { key: "uppercase", label: "Uppercase", hint: "A-Z" },

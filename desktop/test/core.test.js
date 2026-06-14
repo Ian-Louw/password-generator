@@ -3,9 +3,10 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const generator = require('../src/core/generator');
-const passphrase = require('../src/core/passphrase');
-const strength = require('../src/core/strength');
+const core = require('@ultrapass/core');
+const generator = core;
+const passphrase = core;
+const strength = core;
 const hasher = require('../src/core/hasher');
 
 // ── generator ──────────────────────────────────────────────────────────────

@@ -14,9 +14,10 @@ const {
 const path = require('path');
 const fs = require('fs');
 
-const generator = require('./src/core/generator');
-const passphrase = require('./src/core/passphrase');
-const strength = require('./src/core/strength');
+const core = require('@ultrapass/core');
+const generator = core; // generatePassword, generatePronounceable, generatePin, generateBulk
+const passphrase = core; // generatePassphrase, passphraseEntropy
+const strength = core; // evaluateStrength
 const hasher = require('./src/core/hasher');
 const qr = require('./src/core/qr');
 

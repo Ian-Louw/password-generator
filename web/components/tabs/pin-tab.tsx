@@ -7,7 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { SecretOutput } from "@/components/secret-output";
-import { generatePin } from "@/lib/core/generator";
+import { generatePin } from "@ultrapass/core";
 
 export function PinTab({ onGenerated }: { onGenerated?: (v: string, k: string) => void }) {
   const [length, setLength] = React.useState(6);

@@ -16,8 +16,13 @@ import {
 } from "@/components/ui/select";
 import { SecretOutput } from "@/components/secret-output";
 import { StrengthMeter } from "@/components/strength-meter";
-import { generatePassphrase, passphraseEntropy, type PassphraseOptions } from "@/lib/core/passphrase";
-import { evaluateStrength, type StrengthResult } from "@/lib/core/strength";
+import {
+  generatePassphrase,
+  passphraseEntropy,
+  evaluateStrength,
+  type PassphraseOptions,
+  type StrengthResult,
+} from "@ultrapass/core";
 
 const SEPARATORS = [
   { value: "-", label: "- (hyphen)" },

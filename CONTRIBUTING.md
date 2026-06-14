@@ -7,18 +7,31 @@ welcome — bug reports, feature ideas, docs, and code.
 
 ```
 .
+├── core/                       # @ultrapass/core — shared TypeScript logic
+│   ├── src/                    # generator, passphrase, strength, wordlist, RNG
+│   └── test/                   # node:test unit tests (run against dist/)
 ├── desktop/                    # UltraPass desktop app (Electron)
-│   ├── main.js                 # Electron main process + IPC
+│   ├── main.js                 # Electron main process + IPC (uses @ultrapass/core)
 │   ├── preload.js              # Secure context bridge
-│   ├── src/core/               # Pure, dependency-light logic (testable in Node)
+│   ├── src/core/               # Desktop-only bits: bcrypt/scrypt hasher, QR
 │   ├── src/renderer/           # UI (HTML/CSS/JS)
 │   └── test/                   # node:test unit tests
 ├── web/                        # UltraPass web app (Next.js + shadcn/ui)
 │   ├── app/                    # App Router pages + layout
 │   ├── components/             # UI + shadcn/ui components + feature tabs
-│   └── lib/core/               # Logic ported to TypeScript (Web Crypto)
-└── .github/workflows/build.yml # CI: test + cross-platform installers + web build
+│   └── lib/                    # Web-only hasher (SubtleCrypto) + helpers
+└── .github/workflows/          # CI: core/desktop/web builds, installers, deploy
 ```
+
+### Shared core
+
+The cryptographically-sensitive logic lives once in **`@ultrapass/core`** (a
+local `file:` package) and is consumed by both apps. It uses `globalThis.crypto`
+(the Web Crypto API), which works in browsers and in Node/Electron 18+. Build it
+with `cd core && npm run build` — though `npm install` in either app runs that
+automatically via the package's `prepare` script. Hashing stays per-app because
+it is genuinely platform-specific (Node `crypto` + scrypt on desktop, SubtleCrypto
+in the browser).
 
 ## Developing the desktop app
 

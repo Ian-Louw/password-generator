@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { copyText } from "@/lib/clipboard";
-import { generateBulk, type PasswordOptions } from "@/lib/core/generator";
+import { generateBulk, type PasswordOptions } from "@ultrapass/core";
 
 export function BulkTab() {
   const [count, setCount] = React.useState(20);

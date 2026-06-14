@@ -25,6 +25,7 @@
     "dist:linux": "electron-builder --linux"
   },
   "dependencies": {
+    "@ultrapass/core": "file:../core",
     "bcryptjs": "^2.4.3",
     "qrcode": "^1.5.4"
   },

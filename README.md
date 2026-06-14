@@ -71,12 +71,13 @@ tagged release builds:
 
 ## 🛠️ Build from source
 
-Requires [Node.js](https://nodejs.org) 18+.
+Requires [Node.js](https://nodejs.org) 18+. The shared logic lives in
+`@ultrapass/core`; `npm install` in either app builds it automatically.
 
 ```bash
 git clone https://github.com/ian-louw/password-generator.git
 cd password-generator/desktop
-npm install
+npm install        # also builds the shared @ultrapass/core package
 
 npm start          # run the app
 npm test           # run the unit tests
@@ -114,9 +115,18 @@ npm run dev      # http://localhost:3000
 npm run build    # production build
 ```
 
-It deploys cleanly to Vercel/Netlify, and (because everything is client-side)
-can also be produced as a fully static site — just enable `output: 'export'` in
-`next.config.mjs`.
+### Deploy to Vercel
+
+A ready-to-use workflow lives at [`.github/workflows/deploy-web.yml`](.github/workflows/deploy-web.yml).
+It is **opt-in**: to enable it,
+
+1. Create a Vercel project and set its **Root Directory** to `web`.
+2. Add repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`.
+3. Add a repository variable `ENABLE_VERCEL` = `true`.
+
+Pushes to `main` that touch `web/` or `core/` then deploy automatically. Because
+everything is client-side, the app can also be produced as a fully static site —
+enable `output: 'export'` in `next.config.mjs`.
 
 ## 🤝 Contributing
 

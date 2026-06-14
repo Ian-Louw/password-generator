@@ -1,4 +1,4 @@
-name: Build Desktop App
+name: Build
 
 on:
   push:
@@ -8,12 +8,22 @@ on:
     branches: [main]
   workflow_dispatch:
 
-defaults:
-  run:
-    working-directory: desktop
-
 jobs:
-  # ── Fast feedback: lint-free unit tests on Linux ─────────────────────────────
+  # ── Shared core: build + unit tests ──────────────────────────────────────────
+  core:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm test
+
+  # ── Desktop core-logic unit tests ────────────────────────────────────────────
   test:
     runs-on: ubuntu-latest
     steps:
@@ -21,30 +31,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: desktop/package-lock.json
-      - run: npm ci
-      - run: npm test
+      - name: Build shared core
+        run: npm ci && npm run build
+        working-directory: core
+      - name: Install & test desktop
+        run: npm install && npm test
+        working-directory: desktop
 
   # ── Web app (Next.js) build ──────────────────────────────────────────────────
   web:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - run: npm ci
-      - run: npm run build
+      - name: Build shared core
+        run: npm ci && npm run build
+        working-directory: core
+      - name: Install & build web
+        run: npm install && npm run build
+        working-directory: web
 
   # ── Cross-platform installers ────────────────────────────────────────────────
   build:
-    needs: test
+    needs: [core, test]
     strategy:
       fail-fast: false
       matrix:
@@ -61,17 +72,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-          cache-dependency-path: desktop/package-lock.json
-      - run: npm ci
-
+      - name: Build shared core
+        run: npm ci && npm run build
+        working-directory: core
+      - name: Install desktop deps
+        run: npm install
+        working-directory: desktop
       - name: Build installers
         run: npm run dist:${{ matrix.platform }}
+        working-directory: desktop
         env:
-          # Avoid electron-builder trying to code-sign without credentials.
           CSC_IDENTITY_AUTO_DISCOVERY: false
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
